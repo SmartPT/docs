@@ -3,7 +3,7 @@ const docsRoot = 'https://docs.smartpt.co.il/';
 const docsImage = `${docsRoot}assets/smartpt-og.svg`;
 const youtubeUrl = 'https://youtube.com/@smartpt-1ai?si=c3AVjfFoWpoEmE9I';
 
-const navGroups = [
+let navGroups = [
   {
     title: 'Start',
     items: [
@@ -86,7 +86,7 @@ const navGroups = [
   }
 ];
 
-const pageMeta = {
+let pageMeta = {
   overview: 'SmartPT documentation for installing and operating SmartPT Core, JIT Access, and AD Control in on-prem Active Directory environments.',
   'getting-started': 'Follow the recommended order for installing SmartPT Core, activating licensing, and configuring AD Control and JIT Access.',
   requirements: 'SmartPT requirements for Windows Server, IIS, .NET hosting, Local Active Directory, service identity, network access, SMTP, audit storage, browsers, and staging validation.',
@@ -145,7 +145,7 @@ const pageMeta = {
 
 Object.assign(pageMeta, window.smartptMetaOverrides || {});
 
-const pages = {
+let pages = {
   'overview': {
     title: 'SmartPT Customer Documentation',
     eyebrow: 'Customer docs',
@@ -1681,6 +1681,87 @@ pages['jit-user'] = pages['jit-eligible-otp'];
 pages['jit-settings'] = pages['jit-settings-overview'];
 pages['jit-security'] = pages['security-model'];
 
+const englishDocsState = {
+  navGroups,
+  pageMeta: { ...pageMeta },
+  pages: { ...pages }
+};
+const hebrewDocsState = window.smartptHebrew || { navGroups: [], pageMeta: {}, pages: {} };
+const languageStorageKey = 'smartpt-docs-language';
+let activeLocale = 'en';
+
+const interfaceText = {
+  en: {
+    start: 'Start', docs: 'Docs', breadcrumb: 'Breadcrumb', onThisPage: 'On this page',
+    recommendedNext: 'Recommended next step', related: 'Related documentation', previous: 'Previous', next: 'Next',
+    pager: 'Previous and next documentation pages', relatedLabel: 'Related documentation', taskLabel: 'Next task links',
+    tagline: 'Customer documentation for SmartPT Core, AD Control, and JIT Access', menu: 'Docs menu',
+    searchLabel: 'Search documentation', searchPlaceholder: 'Search docs', videos: 'Videos', downloads: 'Downloads',
+    closeMenu: 'Close docs menu', documentation: 'Documentation', close: 'Close', navLabel: 'Documentation navigation',
+    expandedScreenshot: 'Expanded screenshot', openImage: 'open image', noResults: 'No results',
+    noResultsHelp: 'Try OTP, Tier 0, Protected Users, Password Reset, JIT, Assignments, Licensing, Audit, Revoke, or IIS.',
+    footer: 'SmartPT documentation. Last updated July 14, 2026. Product behavior can vary by version and configuration.',
+    privacy: 'Privacy', terms: 'Terms', cookie: 'Cookie Policy', accessibility: 'Accessibility', language: 'עברית',
+    imageAlt: 'SmartPT documentation for Active Directory privileged actions', skip: 'Skip to content'
+  },
+  he: {
+    start: 'התחלה', docs: 'תיעוד', breadcrumb: 'פירורי לחם', onThisPage: 'בעמוד זה',
+    recommendedNext: 'השלב הבא', related: 'מדריכים קשורים', previous: 'הקודם', next: 'הבא',
+    pager: 'ניווט בין עמודי התיעוד', relatedLabel: 'מדריכים קשורים', taskLabel: 'קישורים להמשך',
+    tagline: 'מדריכים ל-SmartPT Core, ל-AD Control ול-JIT Access', menu: 'תפריט תיעוד',
+    searchLabel: 'חיפוש בתיעוד', searchPlaceholder: 'חיפוש בתיעוד', videos: 'סרטונים', downloads: 'הורדות',
+    closeMenu: 'סגירת תפריט התיעוד', documentation: 'תיעוד', close: 'סגירה', navLabel: 'ניווט בתיעוד',
+    expandedScreenshot: 'צילום מסך מוגדל', openImage: 'פתיחת התמונה', noResults: 'לא נמצאו תוצאות',
+    noResultsHelp: 'אפשר לחפש OTP, Tier 0, משתמשים מוגנים, איפוס סיסמה, JIT, הקצאות, רישוי, ביקורת, ביטול או IIS.',
+    footer: 'תיעוד SmartPT. עודכן לאחרונה ב-4 באוגוסט 2026. התנהגות המוצר עשויה להשתנות לפי הגרסה וההגדרות.',
+    privacy: 'פרטיות', terms: 'תנאי שימוש', cookie: 'מדיניות עוגיות', accessibility: 'נגישות', language: 'English',
+    imageAlt: 'תיעוד SmartPT לפעולות רגישות ב-Active Directory', skip: 'דילוג לתוכן'
+  }
+};
+
+function detectInitialLocale() {
+  const saved = localStorage.getItem(languageStorageKey);
+  if (saved === 'he' || saved === 'en') return saved;
+  const country = new URLSearchParams(location.search).get('country')?.toUpperCase();
+  if (country) return country === 'IL' ? 'he' : 'en';
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
+  const usesHebrew = languages.some(language => language?.toLowerCase().startsWith('he'));
+  const usesIsraelRegion = languages.some(language => /-il$/i.test(language || ''));
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return usesHebrew || usesIsraelRegion || timeZone === 'Asia/Jerusalem' ? 'he' : 'en';
+}
+
+function routeState() {
+  const raw = (location.hash || '').replace(/^#\/?/, '');
+  const match = raw.match(/^(en|he)\/(.*)$/);
+  if (match) return { locale: match[1], id: match[2] || 'overview', legacy: false };
+  return { locale: detectInitialLocale(), id: raw || 'overview', legacy: true };
+}
+
+function applyLocale(locale) {
+  activeLocale = locale === 'he' ? 'he' : 'en';
+  const isHebrew = activeLocale === 'he';
+  navGroups = isHebrew && hebrewDocsState.navGroups?.length ? hebrewDocsState.navGroups : englishDocsState.navGroups;
+  pageMeta = isHebrew ? { ...englishDocsState.pageMeta, ...(hebrewDocsState.pageMeta || {}) } : englishDocsState.pageMeta;
+  pages = isHebrew ? { ...englishDocsState.pages, ...(hebrewDocsState.pages || {}) } : englishDocsState.pages;
+  document.documentElement.lang = activeLocale;
+  document.documentElement.dir = isHebrew ? 'rtl' : 'ltr';
+  const skipLink = document.querySelector('.skip-link');
+  if (skipLink) skipLink.textContent = interfaceText[activeLocale].skip;
+}
+
+function ui(key) {
+  return interfaceText[activeLocale][key] || interfaceText.en[key] || key;
+}
+
+function routeHash(id, locale = activeLocale) {
+  return `#/${locale}/${id}`;
+}
+
+function localizeBodyLinks(body) {
+  return body.replace(/href="#\/?(?:en\/|he\/)?([a-z0-9-]+)"/gi, (match, id) => pages[id] ? `href="${routeHash(id)}"` : match);
+}
+
 function page(title, eyebrow, body) {
   return { title, eyebrow, body: `<section class="doc"><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${body}</section>` };
 }
@@ -2007,7 +2088,10 @@ const taskLinks = {
 };
 
 function allPagesForSearch() {
-  return Object.entries(pages).map(([id, pageData]) => ({
+  const entries = activeLocale === 'he'
+    ? flattenedNav().map(item => [item.id, pages[item.id]]).filter(([, pageData]) => pageData)
+    : Object.entries(pages);
+  return entries.map(([id, pageData]) => ({
     id,
     title: pageData.title,
     category: navEntry(id)?.group || pageData.eyebrow || 'Docs',
@@ -2058,12 +2142,13 @@ function pageCategory(id) {
 
 function breadcrumbHtml(current) {
   const entry = navEntry(current);
-  const group = entry?.group || pages[current]?.eyebrow || 'Docs';
+  const group = entry?.group || pages[current]?.eyebrow || ui('docs');
   const label = entry?.label || pages[current]?.title || current;
-  const home = current === 'overview' ? '<span>Start</span>' : '<a href="#overview">Start</a>';
-  const groupCrumb = group !== 'Start' ? `<span aria-hidden="true">/</span><span>${escapeHtml(group)}</span>` : '';
+  const home = current === 'overview' ? `<span>${ui('start')}</span>` : `<a href="${routeHash('overview')}">${ui('start')}</a>`;
+  const startGroup = navGroups[0]?.title || ui('start');
+  const groupCrumb = group !== startGroup ? `<span aria-hidden="true">/</span><span>${escapeHtml(group)}</span>` : '';
   return `
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <nav class="breadcrumbs" aria-label="${ui('breadcrumb')}">
       ${home}
       ${groupCrumb}
       ${current !== 'overview' && label && label !== group ? `<span aria-hidden="true">/</span><span aria-current="page">${escapeHtml(label)}</span>` : ''}
@@ -2078,8 +2163,8 @@ function tocHtml(body) {
     .slice(0, 12);
   if (headings.length < 2) return '';
   return `
-    <aside class="toc" aria-label="On this page">
-      <div class="toc-title">On this page</div>
+    <aside class="toc" aria-label="${ui('onThisPage')}">
+      <div class="toc-title">${ui('onThisPage')}</div>
       ${headings.map(heading => `<a href="#${slugify(heading)}" data-toc-target="${slugify(heading)}">${escapeHtml(heading)}</a>`).join('')}
     </aside>
   `;
@@ -2099,7 +2184,7 @@ function enhanceImages(body) {
 function slugify(value) {
   return normalizeText(value)
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/(^-|-$)/g, '');
 }
 
@@ -2107,10 +2192,10 @@ function taskLinksHtml(current) {
   const links = taskLinks[current] || [];
   if (!links.length) return '';
   return `
-    <section class="task-links" aria-label="Next task links">
-      <h2>Recommended next step</h2>
+    <section class="task-links" aria-label="${ui('taskLabel')}">
+      <h2>${ui('recommendedNext')}</h2>
       <ul>
-        ${links.map(([id, text]) => `<li><a href="#${id}">${escapeHtml(text)}</a></li>`).join('')}
+        ${links.map(([id, text]) => `<li><a href="${routeHash(id)}">${escapeHtml(activeLocale === 'he' ? pageLabel(id) : text)}</a></li>`).join('')}
       </ul>
     </section>
   `;
@@ -2120,10 +2205,10 @@ function relatedDocsHtml(current) {
   const links = (relatedDocs[current] || []).filter(id => pages[id]).slice(0, 5);
   if (!links.length) return '';
   return `
-    <section class="related-docs" aria-label="Related documentation">
-      <h2>Related documentation</h2>
+    <section class="related-docs" aria-label="${ui('relatedLabel')}">
+      <h2>${ui('related')}</h2>
       <div class="related-grid">
-        ${links.map(id => `<a class="related-link" href="#${id}"><span>${escapeHtml(pageCategory(id))}</span><strong>${escapeHtml(pageLabel(id))}</strong></a>`).join('')}
+        ${links.map(id => `<a class="related-link" href="${routeHash(id)}"><span>${escapeHtml(pageCategory(id))}</span><strong>${escapeHtml(pageLabel(id))}</strong></a>`).join('')}
       </div>
     </section>
   `;
@@ -2132,14 +2217,15 @@ function relatedDocsHtml(current) {
 function pagerHtml(current) {
   const items = flattenedNav();
   const index = items.findIndex(item => item.id === current);
-  if (index === -1 || pageCategory(current) === 'Policies') return '';
+  const policyGroup = navGroups.find(group => group.items.some(([id]) => id === 'privacy'))?.title;
+  if (index === -1 || pageCategory(current) === policyGroup) return '';
   const previous = items[index - 1];
-  const next = items[index + 1]?.group === 'Policies' ? null : items[index + 1];
+  const next = items[index + 1]?.group === policyGroup ? null : items[index + 1];
   if (!previous && !next) return '';
   return `
-    <nav class="doc-pager" aria-label="Previous and next documentation pages">
-      ${previous ? `<a class="pager-link previous" href="#${previous.id}"><span>Previous</span><strong>${escapeHtml(previous.label)}</strong></a>` : '<span></span>'}
-      ${next ? `<a class="pager-link next" href="#${next.id}"><span>Next</span><strong>${escapeHtml(next.label)}</strong></a>` : '<span></span>'}
+    <nav class="doc-pager" aria-label="${ui('pager')}">
+      ${previous ? `<a class="pager-link previous" href="${routeHash(previous.id)}"><span>${ui('previous')}</span><strong>${escapeHtml(previous.label)}</strong></a>` : '<span></span>'}
+      ${next ? `<a class="pager-link next" href="${routeHash(next.id)}"><span>${ui('next')}</span><strong>${escapeHtml(next.label)}</strong></a>` : '<span></span>'}
     </nav>
   `;
 }
@@ -2155,12 +2241,16 @@ function pageFooterHtml(current) {
 }
 
 function render() {
-  const id = (location.hash || '#overview').replace('#', '') || 'overview';
-  const current = pages[id] ? id : 'overview';
+  const route = routeState();
+  applyLocale(route.locale);
+  const current = pages[route.id] ? route.id : 'overview';
+  if (route.legacy || route.id !== current) {
+    history.replaceState(null, '', routeHash(current));
+  }
   const pageData = pages[current];
-  const enhancedBody = enhanceImages(addHeadingAnchors(pageData.body));
+  const enhancedBody = localizeBodyLinks(enhanceImages(addHeadingAnchors(pageData.body)));
   const toc = tocHtml(enhancedBody);
-  document.title = `${pageData.title} | SmartPT Docs`;
+  document.title = activeLocale === 'he' ? `${pageData.title} | תיעוד SmartPT` : `${pageData.title} | SmartPT Docs`;
   updateDocumentMeta(current, pageData);
   document.body.classList.toggle('drawer-open', navOpen);
 
@@ -2169,28 +2259,29 @@ function render() {
       ${routeTargetsHtml()}
       <header class="topbar">
         <div class="shell topbar-inner">
-          <a class="brand" href="#overview">
+          <a class="brand" href="${routeHash('overview')}">
             <span class="brand-mark" aria-hidden="true">PT</span>
-            <span><span class="brand-word">Smart<span>PT</span></span> Docs<small>Customer documentation for SmartPT Core, AD Control, and JIT Access</small></span>
+            <span><span class="brand-word">Smart<span>PT</span></span> ${ui('docs')}<small>${ui('tagline')}</small></span>
           </a>
           <div class="top-actions">
-            <button class="button secondary mobile-menu" type="button" id="menuButton" aria-expanded="${navOpen}" aria-controls="sidebar">Docs menu</button>
+            <button class="button secondary mobile-menu" type="button" id="menuButton" aria-expanded="${navOpen}" aria-controls="sidebar">${ui('menu')}</button>
             <div class="search-box">
-              <label class="sr-only" for="searchInput">Search documentation</label>
-              <input id="searchInput" class="search" type="search" placeholder="Search docs" autocomplete="off" />
+              <label class="sr-only" for="searchInput">${ui('searchLabel')}</label>
+              <input id="searchInput" class="search" type="search" placeholder="${ui('searchPlaceholder')}" autocomplete="off" />
               <div id="searchResults" class="search-results" role="listbox" hidden></div>
             </div>
-            <a class="button secondary" href="${youtubeUrl}" target="_blank" rel="noopener noreferrer">Videos</a>
-            <a class="button primary" href="#downloads">Downloads</a>
+            <a class="button secondary" href="${youtubeUrl}" target="_blank" rel="noopener noreferrer">${ui('videos')}</a>
+            <a class="button secondary language-switch" id="languageSwitch" href="${routeHash(current, activeLocale === 'he' ? 'en' : 'he')}">${ui('language')}</a>
+            <a class="button primary" href="${routeHash('downloads')}">${ui('downloads')}</a>
           </div>
         </div>
       </header>
-      <button class="drawer-backdrop ${navOpen ? 'open' : ''}" id="drawerBackdrop" type="button" aria-label="Close docs menu"></button>
+      <button class="drawer-backdrop ${navOpen ? 'open' : ''}" id="drawerBackdrop" type="button" aria-label="${ui('closeMenu')}"></button>
       <div class="shell docs-shell">
-        <aside class="sidebar ${navOpen ? 'open' : ''}" id="sidebar" aria-label="Documentation navigation">
+        <aside class="sidebar ${navOpen ? 'open' : ''}" id="sidebar" aria-label="${ui('navLabel')}">
           <div class="sidebar-header">
-            <strong>Documentation</strong>
-            <button class="button secondary sidebar-close" type="button" id="closeMenuButton">Close</button>
+            <strong>${ui('documentation')}</strong>
+            <button class="button secondary sidebar-close" type="button" id="closeMenuButton">${ui('close')}</button>
           </div>
           ${renderNav(current)}
         </aside>
@@ -2205,10 +2296,10 @@ function render() {
           </div>
         </main>
       </div>
-      <div class="image-lightbox" id="imageLightbox" role="dialog" aria-modal="true" aria-label="Expanded screenshot" hidden>
+      <div class="image-lightbox" id="imageLightbox" role="dialog" aria-modal="true" aria-label="${ui('expandedScreenshot')}" hidden>
         <div class="lightbox-toolbar">
           <div class="lightbox-title" id="lightboxTitle"></div>
-          <button class="lightbox-close" id="lightboxClose" type="button">Close</button>
+          <button class="lightbox-close" id="lightboxClose" type="button">${ui('close')}</button>
         </div>
         <div class="lightbox-frame" id="lightboxFrame">
           <img class="lightbox-image" id="lightboxImage" alt="" />
@@ -2216,12 +2307,12 @@ function render() {
       </div>
       <footer class="footer">
         <div class="shell footer-inner">
-          <span>SmartPT documentation. Last updated July 14, 2026. Product behavior can vary by version and configuration.</span>
+          <span>${ui('footer')}</span>
           <span class="footer-links">
-            <a href="#privacy">Privacy</a>
-            <a href="#terms">Terms</a>
-            <a href="#cookie-policy">Cookie Policy</a>
-            <a href="#accessibility">Accessibility</a>
+            <a href="${routeHash('privacy')}">${ui('privacy')}</a>
+            <a href="${routeHash('terms')}">${ui('terms')}</a>
+            <a href="${routeHash('cookie-policy')}">${ui('cookie')}</a>
+            <a href="${routeHash('accessibility')}">${ui('accessibility')}</a>
             <a href="${youtubeUrl}" target="_blank" rel="noopener noreferrer">YouTube</a>
           </span>
         </div>
@@ -2240,16 +2331,17 @@ function routeTargetsHtml() {
 function updateDocumentMeta(current, pageData) {
   const description = pageMeta[current] || pageMeta.overview;
   const canonicalUrl = docsRoot;
+  const localizedTitle = activeLocale === 'he' ? `${pageData.title} | תיעוד SmartPT` : `${pageData.title} | SmartPT Docs`;
   setMeta('meta[name="description"]', 'content', description);
-  setMeta('meta[property="og:title"]', 'content', `${pageData.title} | SmartPT Docs`);
+  setMeta('meta[property="og:title"]', 'content', localizedTitle);
   setMeta('meta[property="og:description"]', 'content', description);
   setMeta('meta[property="og:url"]', 'content', canonicalUrl);
   setMeta('meta[property="og:image"]', 'content', docsImage);
-  setMeta('meta[property="og:image:alt"]', 'content', 'SmartPT documentation for Active Directory privileged actions');
-  setMeta('meta[name="twitter:title"]', 'content', `${pageData.title} | SmartPT Docs`);
+  setMeta('meta[property="og:image:alt"]', 'content', ui('imageAlt'));
+  setMeta('meta[name="twitter:title"]', 'content', localizedTitle);
   setMeta('meta[name="twitter:description"]', 'content', description);
   setMeta('meta[name="twitter:image"]', 'content', docsImage);
-  setMeta('meta[name="twitter:image:alt"]', 'content', 'SmartPT documentation for Active Directory privileged actions');
+  setMeta('meta[name="twitter:image:alt"]', 'content', ui('imageAlt'));
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) canonical.setAttribute('href', canonicalUrl);
 }
@@ -2263,7 +2355,7 @@ function renderNav(current) {
   return navGroups.map(group => `
     <div class="nav-group">
       <div class="nav-title">${group.title}</div>
-      ${group.items.map(([id, label]) => `<a class="nav-link ${id === current ? 'active' : ''}" href="#${id}">${label}</a>`).join('')}
+      ${group.items.map(([id, label]) => `<a class="nav-link ${id === current ? 'active' : ''}" href="${routeHash(id)}">${label}</a>`).join('')}
     </div>
   `).join('');
 }
@@ -2298,6 +2390,9 @@ function bindEvents() {
   document.getElementById('closeMenuButton')?.addEventListener('click', () => closeDrawer());
   document.getElementById('drawerBackdrop')?.addEventListener('click', () => closeDrawer());
   document.getElementById('lightboxClose')?.addEventListener('click', () => closeImageLightbox());
+  document.getElementById('languageSwitch')?.addEventListener('click', () => {
+    localStorage.setItem(languageStorageKey, activeLocale === 'he' ? 'en' : 'he');
+  });
   document.getElementById('imageLightbox')?.addEventListener('click', event => {
     if (event.target?.id === 'imageLightbox') closeImageLightbox();
   });
@@ -2305,7 +2400,7 @@ function bindEvents() {
   document.querySelectorAll('.doc-screenshot img').forEach(image => {
     image.setAttribute('role', 'button');
     image.setAttribute('tabindex', '0');
-    image.setAttribute('aria-label', `${image.getAttribute('alt') || 'Documentation screenshot'} - open image`);
+    image.setAttribute('aria-label', `${image.getAttribute('alt') || ui('expandedScreenshot')} - ${ui('openImage')}`);
     const open = () => openImageLightbox(image);
     image.addEventListener('click', open);
     image.addEventListener('keydown', event => {
@@ -2343,13 +2438,13 @@ function bindEvents() {
       .slice(0, 8);
     results.innerHTML = currentMatches.length
       ? currentMatches.map((item, index) => `
-        <a class="search-result ${index === activeSearchIndex ? 'active' : ''}" id="search-result-${index}" role="option" aria-selected="${index === activeSearchIndex}" href="#${item.id}">
+        <a class="search-result ${index === activeSearchIndex ? 'active' : ''}" id="search-result-${index}" role="option" aria-selected="${index === activeSearchIndex}" href="${routeHash(item.id)}">
           <span class="search-category">${escapeHtml(item.category)}</span>
           <strong>${escapeHtml(item.title)}</strong>
           <span>${escapeHtml(item.snippet)}</span>
         </a>
       `).join('')
-      : '<div class="search-result empty"><strong>No results</strong><span>Try OTP, Tier 0, Protected Users, Password Reset, JIT, Assignments, Licensing, Audit, Revoke, or IIS.</span></div>';
+      : `<div class="search-result empty"><strong>${ui('noResults')}</strong><span>${ui('noResultsHelp')}</span></div>`;
     results.hidden = false;
     results.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
@@ -2384,7 +2479,7 @@ function bindEvents() {
     }
     if (event.key === 'Enter' && activeSearchIndex >= 0) {
       event.preventDefault();
-      location.hash = currentMatches[activeSearchIndex].id;
+      location.hash = routeHash(currentMatches[activeSearchIndex].id).replace(/^#/, '');
       closeSearch();
     }
     if (event.key === 'Escape') closeSearch();
