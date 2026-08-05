@@ -1705,17 +1705,17 @@ const interfaceText = {
     imageAlt: 'SmartPT documentation for Active Directory privileged actions', skip: 'Skip to content'
   },
   he: {
-    start: 'התחלה', docs: 'תיעוד', breadcrumb: 'פירורי לחם', onThisPage: 'בעמוד זה',
-    recommendedNext: 'השלב הבא', related: 'מדריכים קשורים', previous: 'הקודם', next: 'הבא',
-    pager: 'ניווט בין עמודי התיעוד', relatedLabel: 'מדריכים קשורים', taskLabel: 'קישורים להמשך',
-    tagline: 'מדריכים ל-SmartPT Core, ל-AD Control ול-JIT Access', menu: 'תפריט תיעוד',
-    searchLabel: 'חיפוש בתיעוד', searchPlaceholder: 'חיפוש בתיעוד', videos: 'סרטונים', downloads: 'הורדות',
-    closeMenu: 'סגירת תפריט התיעוד', documentation: 'תיעוד', close: 'סגירה', navLabel: 'ניווט בתיעוד',
-    expandedScreenshot: 'צילום מסך מוגדל', openImage: 'פתיחת התמונה', noResults: 'לא נמצאו תוצאות',
-    noResultsHelp: 'אפשר לחפש OTP, Tier 0, משתמשים מוגנים, איפוס סיסמה, JIT, הקצאות, רישוי, ביקורת, ביטול או IIS.',
-    footer: 'תיעוד SmartPT. עודכן לאחרונה ב-4 באוגוסט 2026. התנהגות המוצר עשויה להשתנות לפי הגרסה וההגדרות.',
+    start: 'ראשי', docs: 'מדריכים', breadcrumb: 'מיקום במדריכים', onThisPage: 'תוכן העמוד',
+    recommendedNext: 'מומלץ להמשיך אל', related: 'מידע נוסף', previous: 'לעמוד הקודם', next: 'לעמוד הבא',
+    pager: 'מעבר בין מדריכים', relatedLabel: 'מידע נוסף', taskLabel: 'המשך התהליך',
+    tagline: 'התקנה, הגדרה ותפעול של SmartPT Core, AD Control ו-JIT Access', menu: 'כל המדריכים',
+    searchLabel: 'חיפוש במדריכים', searchPlaceholder: 'מה תרצו למצוא?', videos: 'סרטוני הדרכה', downloads: 'הורדות',
+    closeMenu: 'סגירת תפריט המדריכים', documentation: 'מרכז הידע', close: 'סגירה', navLabel: 'רשימת המדריכים',
+    expandedScreenshot: 'תצוגה מוגדלת של צילום המסך', openImage: 'הצגת התמונה', noResults: 'לא מצאנו תוצאות',
+    noResultsHelp: 'נסו לחפש OTP, Tier 0, משתמשים מוגנים, איפוס סיסמה, JIT, הקצאות, רישוי, ביקורת, ביטול או IIS.',
+    footer: 'מרכז הידע של SmartPT. עודכן לאחרונה ב-5 באוגוסט 2026. המסכים והאפשרויות עשויים להשתנות בהתאם לגרסה ולהגדרות.',
     privacy: 'פרטיות', terms: 'תנאי שימוש', cookie: 'מדיניות עוגיות', accessibility: 'נגישות', language: 'English',
-    imageAlt: 'תיעוד SmartPT לפעולות רגישות ב-Active Directory', skip: 'דילוג לתוכן'
+    imageAlt: 'מדריכי SmartPT לניהול פעולות רגישות ב-Active Directory', skip: 'מעבר לתוכן העמוד'
   }
 };
 
@@ -2250,7 +2250,7 @@ function render() {
   const pageData = pages[current];
   const enhancedBody = localizeBodyLinks(enhanceImages(addHeadingAnchors(pageData.body)));
   const toc = tocHtml(enhancedBody);
-  document.title = activeLocale === 'he' ? `${pageData.title} | תיעוד SmartPT` : `${pageData.title} | SmartPT Docs`;
+  document.title = activeLocale === 'he' ? `${pageData.title} | מרכז הידע של SmartPT` : `${pageData.title} | SmartPT Docs`;
   updateDocumentMeta(current, pageData);
   document.body.classList.toggle('drawer-open', navOpen);
 
@@ -2261,7 +2261,7 @@ function render() {
         <div class="shell topbar-inner">
           <a class="brand" href="${routeHash('overview')}">
             <span class="brand-mark" aria-hidden="true">PT</span>
-            <span><span class="brand-word">Smart<span>PT</span></span> ${ui('docs')}<small>${ui('tagline')}</small></span>
+            <span>${activeLocale === 'he' ? `${ui('documentation')} של <span class="brand-word">Smart<span>PT</span></span>` : `<span class="brand-word">Smart<span>PT</span></span> ${ui('docs')}`}<small>${ui('tagline')}</small></span>
           </a>
           <div class="top-actions">
             <button class="button secondary mobile-menu" type="button" id="menuButton" aria-expanded="${navOpen}" aria-controls="sidebar">${ui('menu')}</button>
@@ -2331,7 +2331,7 @@ function routeTargetsHtml() {
 function updateDocumentMeta(current, pageData) {
   const description = pageMeta[current] || pageMeta.overview;
   const canonicalUrl = docsRoot;
-  const localizedTitle = activeLocale === 'he' ? `${pageData.title} | תיעוד SmartPT` : `${pageData.title} | SmartPT Docs`;
+  const localizedTitle = activeLocale === 'he' ? `${pageData.title} | מרכז הידע של SmartPT` : `${pageData.title} | SmartPT Docs`;
   setMeta('meta[name="description"]', 'content', description);
   setMeta('meta[property="og:title"]', 'content', localizedTitle);
   setMeta('meta[property="og:description"]', 'content', description);
